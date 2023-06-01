@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.18/css/jquery.dataTables.css"/>
+
+</head>
+<body>
+<div>
+    <table>
+
+        <td><input type="text" id = "id" hidden></td>
+
+        <tr>
+            <td>Producer</td>
+            <td><input type="text" id = "producer"></td>
+        </tr>
+        <tr>
+            <td>Model</td>
+            <td><input type="text" id = "model"></td>
+        </tr>
+        <tr>
+            <td>Price</td>
+            <td><input type="text" id = "price"></td>
+        </tr>
+        <tr colspan = "2">
+            <td><input type="button" value="Add or EDIT" id="btnAddBook"></td>
+        </tr>
+    </table>
+    <table border = "1" id = "tblBook">
+        <thead>
+        <tr>
+            <th>Producer</th>
+            <th>Model</th>
+            <th>Price</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.18/js/jquery.dataTables.js"></script>
+<script type = "text/javascript">
+    $(document).ready(function () {
+        var book = {};
+        var dynamicURL = "";
+        var methodName = "";
+        getAllBooks();
+        $('#btnAddBook').click(function () {
+            book.producer = $('#producer').val();
+            book.model = $('#model').val();
+            book.price = $('#price').val();
+            var id = $('#id').val();
+            if(id){
+                //update it
+                dynamicURL = "http://localhost:8080/phone/update/"+id;
+                methodName = "PUT";
+            }else{
+                //save it
+                dynamicURL = "http://localhost:8080/phone/";
+                methodName = "POST";
+            }
+            var bookObj = JSON.stringify(book);
+            $.ajax({
+                url: dynamicURL,
+                method: methodName,
+                data: bookObj,
+                contentType: 'application/json; charset=utf-8',
+                success: function () {
+                    alert('Saved successfully');
+                    getAllBooks();
+                    reset();
+                },
+                error: function (error) {
+                    alert(error);
+                }
+            })
+        })
+    })
+
+    function getAllBooks() {
+        $.ajax({
+            url: "http://localhost:8080/phone",
+            method: "GET",
+            dataType: "json",
+
+            success: function (data) {
+                var tableBody = $('#tblBook tbody');
+                tableBody.empty();
+                $(data).each(function (index, element) {
+                    tableBody.append('<tr><td>'+element.producer+'</td><td>'+element.model+'</td><td>'+element.price+'</td><td><button onclick = "update('+element.id+')">Update</button> | <button onclick = "deleteBook('+element.id+')">Delete</button></td></tr>');
+                })
+            },
+            error: function (error) {
+                alert(error);
+            }
+        })
+    }
+
+    function deleteBook(id){
+        $.ajax({
+            url: 'http://localhost:8080/phone/delete/'+id,
+            method: 'DELETE',
+            success: function () {
+                alert('record has been deleted');
+                getAllBooks();
+            },
+            error: function (error) {
+                alert(error);
+            }
+        })
+    }
+
+    function update(id){
+        console.log('goi ham update', id)
+        $.ajax({
+            url: 'http://localhost:8080/phone/detail/'+id,
+            method: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                console.log("vao success khong?")
+                $('#producer').val(data.producer);
+                $('#model').val(data.model);
+                $('#price').val(data.price);
+                $('#id').val(data.id);
+                getAllBooks();
+            },
+            error: function (error) {
+                alert('loi a'+error);
+            }
+        })
+    }
+
+    function reset(){
+        $('#producer').val('');
+        $('#model').val('');
+        $('#price').val('');
+        $('#id').val('');
+    }
+</script>
+</body>
+</html>
